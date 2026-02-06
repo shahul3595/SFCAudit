@@ -25,6 +25,66 @@ class ReportGenerator:
         self.output_folder.mkdir(parents=True, exist_ok=True)
         self.logger = logging.getLogger(__name__)
         self.logger.info(f"Reports will be saved to: {self.output_folder}")
+        self.column_map = self._load_column_map()
+
+    def _load_column_map(self):
+        """Load optional column label/section mapping from mp-map.xlsx."""
+        map_path = Path(__file__).resolve().parents[2] / 'mp-map.xlsx'
+        if not map_path.exists():
+            self.logger.warning("mp-map.xlsx not found. Reports will show raw column names only.")
+            return {}
+
+        try:
+            df = pd.read_excel(map_path, sheet_name='consolidated', header=None)
+            mapping = {}
+            for _, row in df.iterrows():
+                col_key = str(row.iloc[0]).strip() if pd.notna(row.iloc[0]) else ''
+                if not col_key:
+                    continue
+                section = str(row.iloc[1]).strip() if pd.notna(row.iloc[1]) else ''
+                label = str(row.iloc[2]).strip() if pd.notna(row.iloc[2]) else ''
+                mapping[col_key] = {
+                    'section': section,
+                    'label': label,
+                }
+            self.logger.info(f"[OK] Loaded {len(mapping)} column mappings from mp-map.xlsx")
+            return mapping
+        except Exception as e:
+            self.logger.warning(f"Unable to load mp-map.xlsx: {str(e)}")
+            return {}
+
+    def _format_column_reference(self, column_name):
+        if pd.isna(column_name) or str(column_name).strip() == '':
+            return ''
+        column_name = str(column_name).strip()
+        map_item = self.column_map.get(column_name, {})
+        label = map_item.get('label')
+        section = map_item.get('section')
+        parts = [f"{column_name}"]
+        if label:
+            parts.append(label)
+        if section:
+            parts.append(f"Section: {section}")
+        return " | ".join(parts)
+
+    def _build_user_friendly_observation(self, finding):
+        col1 = self._format_column_reference(finding.get('column_1'))
+        col2 = self._format_column_reference(finding.get('column_2'))
+        refs = []
+        if col1:
+            refs.append(f"Primary field: {col1}")
+        if col2:
+            refs.append(f"Reference field: {col2}")
+
+        detail = str(finding.get('detail', ''))
+        if detail.startswith('Cross-table:'):
+            detail = detail.replace('Cross-table:', 'Cross-table comparison failed:', 1)
+        elif detail.startswith('Unable to evaluate:'):
+            detail = detail.replace('Unable to evaluate:', 'Could not evaluate this check:', 1)
+
+        if refs:
+            detail = f"{detail}<br/><b>Fields:</b><br/>" + "<br/>".join(refs)
+        return detail
         
     def generate_ulb_report(self, mp_id, ulb_info, findings):
         """Generate individual ULB audit report PDF"""
@@ -139,7 +199,7 @@ class ReportGenerator:
                 table_data = [['#', 'Rule', 'Severity', 'Observation']]
                 
                 for idx, f in enumerate(part_findings, 1):
-                    obs_text = f"{f['description']}<br/><b>Finding:</b> {f['detail']}"
+                    obs_text = f"{f['description']}<br/><b>Finding:</b> {self._build_user_friendly_observation(f)}"
                     table_data.append([
                         str(idx),
                         f['rule_id'],
