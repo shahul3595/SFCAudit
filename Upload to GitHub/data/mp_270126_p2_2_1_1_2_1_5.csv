@@ -1,0 +1,9 @@
+﻿region_name,district_name,municipality_name,id,mp_id,p2_2_1_dept_name,p2_2_1_name_post,p2_2_1_payband,p2_2_1_sp,p2_2_1_ops,p2_2_1_cps,p2_2_1_vp,p2_2_1_sal,p2_2_1_trained,created_at,updated_at
+Chengalpattu,Chengalpattu,Chengalpattu,304286,1,dept_town_planning,town_planning_officer_grade_i_asst_executive_engineer_planning,"Level 22 - 56,100 - 2,05,700",0,0,0,0,0,0,25:02.5,
+Chengalpattu,Chengalpattu,Chengalpattu,304268,1,dept_public_health,sanitary_inspector,"Level 11 - 35,400 - 1,30,400",2,0,0,2,0,0,25:02.5,
+Chengalpattu,Chengalpattu,Chengalpattu,304267,1,dept_public_health,sanitary_officer,"Level 12 - 35,600 - 1,30,800",1,1,0,0,1522380,0,25:02.5,
+Vellore,Villupuram,Villupuram,275405,137,dept_general_admin,revenue_officer_class_ia,"Level 18 - 36,900 - 1,35,100",1,1,0,0,1143660,0,25:31.9,
+Vellore,Villupuram,Villupuram,275404,137,dept_general_admin,manager_class_iv,"Level 11 - 35,400 - 1,30,400",0,0,0,0,0,0,25:31.9,
+Vellore,Villupuram,Villupuram,275403,137,dept_general_admin,manager_class_ii,"Level 12 - 35,600 - 1,30,800",0,0,0,0,0,0,25:31.9,
+Vellore,Villupuram,Villupuram,275402,137,dept_general_admin,manager_class_ia,"Level 18 - 36,900 - 1,35,100",0,0,0,0,0,0,25:31.9,
+Vellore,Villupuram,Villupuram,275444,137,dept_town_planning,chain_man,"Level 1 - 15,700 - 58,100",0,0,0,0,0,0,25:31.9,

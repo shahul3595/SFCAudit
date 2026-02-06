@@ -1,0 +1,12 @@
+﻿region_name,district_name,municipality_name,id,mp_id,p7_sector_key,p7_subsector_key,p7_unit_type,p7_custom_desc,p7_total_units,p7_acq_upto_2018,p7_acq_2018_to_2022,p7_acq_2023_to_2025,p7_cond_good_qty,p7_cond_fair_qty,p7_cond_poor_qty,p7_cond_unusable_qty,p7_comm_year,p7_curr_cond,p7_orig_cost,p7_total_cost,p7_repair_22_23,p7_repair_23_24,p7_repair_24_25,created_at,updated_at,p7_unit_name
+Chengalpattu,Chengalpattu,Chengalpattu,102351,1,7_1,7_1_1,KM,,8.73,0,2.83,5.9,5.23,3.5,0,0,,,0,397.38,0,0,0,43:09.0,43:09.0,KMs
+Chengalpattu,Chengalpattu,Chengalpattu,102350,1,7_1,7_1_2,KM,,16.77,6.41,4.23,6.13,9.54,7.23,0,0,,,0,377.83,0,0,0,43:09.0,43:09.0,KMs
+Chengalpattu,Chengalpattu,Chengalpattu,102363,1,7_9,7_9_2,NOS,,1,0,0,0,0,0,0,0,2018,Fair,123.16,0,0,0,0,43:09.0,43:09.0,Nos
+Chengalpattu,Chengalpattu,Chengalpattu,102349,1,7_5,7_5_10,KM,,63,0,0,63,26,37,0,0,,,0,294.16,0,0,0,43:09.0,43:09.0,Nos
+Vellore,Villupuram,Kottakuppam,77614,139,7_3,7_3_3,NOS,,1,0,0,0,0,0,0,0,2005,Good,30,0,0,0,0,21:53.0,21:53.0,Nos
+Vellore,Villupuram,Kottakuppam,77615,139,7_3,7_3_3,NOS,,1,0,0,0,0,0,0,0,2005,Good,15,0,0,0,0,21:53.0,21:53.0,Nos
+Vellore,Villupuram,Kottakuppam,77616,139,7_12,7_12_16,NOS,,1,0,0,0,0,0,0,0,2007,Good,3,0,0,0,0,21:53.0,21:53.0,Nos
+Vellore,Villupuram,Kottakuppam,77617,139,7_12,7_12_15,NOS,,1,0,0,0,0,0,0,0,1996,Good,2,0,0,0,0,21:53.0,21:53.0,Nos
+Vellore,Villupuram,Kottakuppam,77605,139,7_3,7_3_3,NOS,,1,0,0,0,0,0,0,0,2014,Good,10,0,0,0,0,21:53.0,21:53.0,Nos
+Vellore,Villupuram,Kottakuppam,77604,139,7_3,7_3_3,NOS,,1,0,0,0,0,0,0,0,2014,Good,10,0,0,0,0,21:53.0,21:53.0,Nos
+Vellore,Villupuram,Kottakuppam,77603,139,7_3,7_3_3,NOS,,1,0,0,0,0,0,0,0,2014,Good,10,0,0,0,0,21:53.0,21:53.0,Nos

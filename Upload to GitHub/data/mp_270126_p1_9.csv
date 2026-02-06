@@ -1,0 +1,13 @@
+﻿region_name,district_name,municipality_name,id,mp_id,p1_1_9_maintained,p1_1_9_maintained_other,p1_1_9_category,p1_1_9_name,p1_1_9_surveyno,p1_1_9_village,p1_1_9_area,p1_1_9_usage,created_at,updated_at
+Chengalpattu,Chengalpattu,Chengalpattu,15038,1,others,Revenue,ponds,Ma Po Se Kulam,1395,Natham A,0.003,in_use,48:49.7,
+Chengalpattu,Chengalpattu,Chengalpattu,15035,1,others,HR & C,ponds,Chinna Muthu mariamman Kovil Kulam,438,Chengalpattu,0.008,in_use,48:49.7,
+Chengalpattu,Chengalpattu,Chengalpattu,15039,1,others,Revenue,ponds,Durai sami Kulam,8,Anumanthaputheri,0.011,in_use,48:49.7,
+Chengalpattu,Chengalpattu,Chengalpattu,15034,1,others,HR & C,ponds,Kodanda raman kovil kulam,59,Chengalpattu,0.007,in_use,48:49.7,
+Chengalpattu,Chengalpattu,Chengalpattu,15033,1,others,HR & C,ponds,kailasanathar Kovil kulam,1071,Natham A,0,in_use,48:49.7,
+Chengalpattu,Chengalpattu,Chengalpattu,15036,1,others,Revenue,ponds,Veppan Kulam,667,Anumanthaputheri,0.007,in_use,48:49.7,
+Chengalpattu,Chengalpattu,Chengalpattu,15032,1,others,PWD,lake,Gundur Lake,418,Gundur6,2.59,in_use,48:49.7,
+Chengalpattu,Chengalpattu,Chengalpattu,15031,1,others,PWD,lake,Kolavai lake,"2,3",Meylamyur,1.89,in_use,48:49.7,
+Vellore,Villupuram,Villupuram,12491,137,others,,ponds,Mandakulam,1,Panampattu,0.0011,in_use,46:43.0,
+Vellore,Villupuram,Villupuram,12492,137,others,,ponds,Ural Kuttai,1,Ural Kuttai,0.0003,not_in_use,46:43.0,
+Vellore,Villupuram,Villupuram,12504,137,others,,ponds,Kali Kovil Kulam East,-,Panampattu,0.0021,in_use,46:43.0,
+Vellore,Villupuram,Villupuram,12483,137,others,,ponds,Ayyanar Kovil Kulam,-,Ragavanpettai,0.0021,in_use,46:43.0,

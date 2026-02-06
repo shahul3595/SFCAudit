@@ -1,0 +1,9 @@
+﻿region_name,district_name,municipality_name,id,mp_id,p2_2_5_role,p2_2_5_post,p2_2_5_nature,p2_2_5_dep_yes_no,p2_2_5_role_yes_no,created_at,updated_at
+Thanjavur,Thanjavur,Adirampattinam,3299,57,Data entry operator,1,managerial,yes,yes,04:22.3,
+Thanjavur,Thanjavur,Adirampattinam,3298,57,Junior Assistant,2,managerial,yes,yes,04:22.3,
+Thirunelveli,Tirunelveli,Vickramasingapuram,2840,107,TYPIST,1,managerial,yes,yes,43:56.9,
+Vellore,Villupuram,Villupuram,2992,137,0,0,field level staff,no,no,25:31.9,
+Chengalpattu,Cuddalore,Virudhachalam,3529,14,இல்லை,0,field level staff,no,no,55:18.3,
+Chengalpattu,Cuddalore,Virudhachalam,3528,14,இல்லை,0,managerial,no,no,55:18.3,
+Thirunelveli,Virudhunagar,virudhunagar,2941,103,General Section ,3,managerial,yes,yes,04:48.3,
+Vellore,Ranipet,Walajapet,2984,132,0,0,field level staff,no,no,35:34.7,

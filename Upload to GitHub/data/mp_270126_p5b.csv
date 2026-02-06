@@ -1,0 +1,30 @@
+﻿region_name,district_name,municipality_name,id,mp_id,p5b_5_6_key,p5b_5_6_agency,p5b_5_6_amt,p5b_5_6_year,p5b_5_6_roi,p5b_5_6_repay,p5b_5_6_schm,p5b_5_6_lrepay_pri,p5b_5_6_lrepay_int,p5b_5_6_lrepay_tot,p5b_5_6_ovdue_pri,p5b_5_6_ovdue_int,p5b_5_6_ovdue_pint,p5b_5_6_ovdue_tot,p5b_5_6_outstan_loan,is_verified,is_approved,created_at,updated_at
+Chengalpattu,Chengalpattu,Chengalpattu,15837,1,5_6_16,LIC (Life Insurance Corporation of India),0,,0,0,0,0,0,0,0,0,0,0,0,FALSE,FALSE,14:27.0,14:27.0
+Chengalpattu,Chengalpattu,Chengalpattu,15820,1,5_6_1,UIDDS,6000000,2024,6.5,6,0,642858,0,642858,0,0,0,0,5357142,FALSE,FALSE,14:27.0,14:27.0
+Chengalpattu,Chengalpattu,Chengalpattu,15821,1,5_6_1,TAMILNADU URBAN INFRASTURE,17403320,2024,6.5,6,,3615786,1067603,4683389,3615786,1067603,0,4683389,14855137,FALSE,FALSE,14:27.0,14:27.0
+Vellore,Villupuram,Kottakuppam,13721,139,5_6_11,IUDP (Integrated Urban Development Plan),0,,0,0,0,0,0,0,0,0,0,0,0,FALSE,FALSE,21:31.0,21:31.0
+Vellore,Villupuram,Kottakuppam,13722,139,5_6_12,IDSMT (Integrated Development of Small and Medium Towns),0,,0,0,0,0,0,0,0,0,0,0,0,FALSE,FALSE,21:31.0,21:31.0
+Vellore,Villupuram,Kottakuppam,13719,139,5_6_9,GOVERNMENT LOAN - HUDCO to TUFIDCO,0,,0,0,0,0,0,0,0,0,0,0,0,FALSE,FALSE,21:31.0,21:31.0
+Vellore,Villupuram,Kottakuppam,13726,139,5_6_16,LIC (Life Insurance Corporation of India),0,,0,0,0,0,0,0,0,0,0,0,0,FALSE,FALSE,21:31.0,21:31.0
+Vellore,Villupuram,Tindivanam,10997,138,5_6_3,DTCP / CMDA,0,,0,0,0,0,0,0,0,0,0,0,0,FALSE,FALSE,20:29.0,20:29.0
+Vellore,Villupuram,Tindivanam,10996,138,5_6_17,,,,,,,,,0,,,,0,0,FALSE,FALSE,20:29.0,20:29.0
+Vellore,Villupuram,Tindivanam,10995,138,5_6_2,0,0,,0,0,0,0,0,0,0,0,0,0,0,FALSE,FALSE,20:29.0,20:29.0
+Vellore,Villupuram,Tindivanam,10994,138,5_6_1,TUFIDCO,30337000,2024,5,6,Conversion fo st light into LED Lights,0,0,0,30337000,0,0,30337000,30337000,FALSE,FALSE,20:29.0,20:29.0
+Vellore,Villupuram,Tindivanam,10993,138,5_6_1,TUFIDCO,15700000,2020,11,15,Special Road Projects,5489930,5181000,10670930,10210070,0,0,10210070,10210070,FALSE,FALSE,20:29.0,20:29.0
+Vellore,Villupuram,Tindivanam,10992,138,5_6_1,TUFIDCO,7000000,2020,0,10,Internal Plumbing Work,2222000,0,2222000,4778000,0,0,4778000,4778000,FALSE,FALSE,20:29.0,20:29.0
+Vellore,Villupuram,Tindivanam,11010,138,5_6_16,LIC (Life Insurance Corporation of India),,,,,,,,0,,,,0,0,FALSE,FALSE,20:29.0,20:29.0
+Vellore,Villupuram,Tindivanam,11009,138,5_6_15,ADB (Asian Development Bank),,,,,,,,0,,,,0,0,FALSE,FALSE,20:29.0,20:29.0
+Vellore,Villupuram,Tindivanam,11008,138,5_6_14,KfW (Kreditanstalt für Wiederaufbau),,,,,,,,0,,,,0,0,FALSE,FALSE,20:29.0,20:29.0
+Vellore,Villupuram,Tindivanam,11007,138,5_6_13,JICA (Japan International Cooperation Agency),,,,,,,,0,,,,0,0,FALSE,FALSE,20:29.0,20:29.0
+Vellore,Villupuram,Villupuram,14944,137,5_6_14,KfW (Kreditanstalt für Wiederaufbau),,,,,,,,0,,,,0,0,FALSE,FALSE,51:28.0,51:28.0
+Vellore,Villupuram,Villupuram,14943,137,5_6_13,JICA (Japan International Cooperation Agency),,,,,,,,0,,,,0,0,FALSE,FALSE,51:28.0,51:28.0
+Vellore,Villupuram,Villupuram,14928,137,5_6_1,UDISSMT,14653000,2020,,,WS INTERNAL PLUMING,8361102,0,8361102,,,,0,6291898,FALSE,FALSE,51:28.0,51:28.0
+Vellore,Villupuram,Villupuram,14929,137,5_6_1,SUIDF,25264000,2023,,,STREET LIGHT,12949485,1484451,14433936,,,,0,12314515,FALSE,FALSE,51:28.0,51:28.0
+Vellore,Villupuram,Villupuram,14930,137,5_6_2,HUDCO,504446000,2022,,,UGSS,0,0,0,,,,0,504446000,FALSE,FALSE,51:28.0,51:28.0
+Vellore,Villupuram,Villupuram,14931,137,5_6_2,SUIDF,565650000,2024,,,UGSS,43631510,13746754,57378264,,,,0,522018490,FALSE,FALSE,51:28.0,51:28.0
+Vellore,Villupuram,Villupuram,14932,137,5_6_17,TNUDF,2673000,2012,9.61,,UGSS,929355,2630229,3559584,,,,0,1743645,FALSE,FALSE,51:28.0,51:28.0
+Vellore,Villupuram,Villupuram,14933,137,5_6_3,DTCP / CMDA,,,,,,,,0,,,,0,0,FALSE,FALSE,51:28.0,51:28.0
+Vellore,Villupuram,Villupuram,14935,137,5_6_5,WATER SUPPLY- LIC LOANS,,,,,,,,0,,,,0,0,FALSE,FALSE,51:28.0,51:28.0
+Vellore,Villupuram,Villupuram,14934,137,5_6_4,WATER SUPPLY- GOVT. LOANS,,,,,,,,0,,,,0,0,FALSE,FALSE,51:28.0,51:28.0
+Vellore,Villupuram,Villupuram,14942,137,5_6_12,IDSMT (Integrated Development of Small and Medium Towns),,,,,,,,0,,,,0,0,FALSE,FALSE,51:28.0,51:28.0
+Vellore,Villupuram,Villupuram,14941,137,5_6_11,IUDP (Integrated Urban Development Plan),,,,,,,,0,,,,0,0,FALSE,FALSE,51:28.0,51:28.0
