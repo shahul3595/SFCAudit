@@ -4,16 +4,22 @@ ULB Audit Framework - Report Generator (with Timestamped Folders)
 - Prevents report flooding in base folder
 """
 
-import pandas as pd
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch
-from reportlab.lib.enums import TA_CENTER
-from datetime import datetime
 import logging
+import math
+import re
+from datetime import datetime
 from pathlib import Path
+
+import pandas as pd
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import inch
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 class ReportGenerator:
     """Generates audit reports in timestamped folders"""
@@ -53,38 +59,192 @@ class ReportGenerator:
             self.logger.warning(f"Unable to load mp-map.xlsx: {str(e)}")
             return {}
 
-    def _format_column_reference(self, column_name):
-        if pd.isna(column_name) or str(column_name).strip() == '':
+    def _get_field_label(self, column_code: str) -> str:
+        if pd.isna(column_code) or str(column_code).strip() == '':
             return ''
-        column_name = str(column_name).strip()
-        map_item = self.column_map.get(column_name, {})
-        label = map_item.get('label')
-        section = map_item.get('section')
-        parts = [f"{column_name}"]
-        if label:
-            parts.append(label)
+        column_code = str(column_code).strip()
+        map_item = self.column_map.get(column_code, {})
+        return map_item.get('label') or column_code
+
+    def _get_field_section(self, column_code: str) -> str:
+        if pd.isna(column_code) or str(column_code).strip() == '':
+            return ''
+        column_code = str(column_code).strip()
+        map_item = self.column_map.get(column_code, {})
+        return map_item.get('section') or ''
+
+    def _format_field_list(self, column_spec: str) -> str:
+        if pd.isna(column_spec) or str(column_spec).strip() == '':
+            return ''
+        columns = [c.strip() for c in str(column_spec).split(',')]
+        labels = [self._get_field_label(col) for col in columns if col]
+        return ", ".join(labels)
+
+    def _format_section_list(self, column_spec: str) -> str:
+        if pd.isna(column_spec) or str(column_spec).strip() == '':
+            return ''
+        columns = [c.strip() for c in str(column_spec).split(',')]
+        sections = []
+        for col in columns:
+            section = self._get_field_section(col)
+            if section and section not in sections:
+                sections.append(section)
+        return "; ".join(sections)
+
+    def _format_number(self, value):
+        if value is None:
+            return ''
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError):
+            return str(value)
+        if math.isnan(numeric):
+            return ''
+        abs_val = abs(numeric)
+        if abs_val >= 100:
+            return f"{numeric:,.0f}"
+        if abs_val >= 10:
+            return f"{numeric:,.1f}".rstrip('0').rstrip('.')
+        return f"{numeric:,.2f}".rstrip('0').rstrip('.')
+
+    def _format_operator_phrase(self, operator: str) -> str:
+        return {
+            '>=': 'at least',
+            '<=': 'at most',
+            '>': 'greater than',
+            '<': 'less than',
+            '==': 'equal to',
+            '=': 'equal to',
+            '!=': 'not equal to',
+        }.get(operator, operator)
+
+    def _build_finding_components(self, finding: dict) -> dict:
+        check_label = str(finding.get('description', '')).strip()
+        detail = str(finding.get('detail', '')).strip()
+        check_type = str(finding.get('check_type', '')).lower().strip()
+
+        finding_text = "This check did not meet the expected condition."
+        why_text = "This value is outside the acceptable range defined for this data item."
+
+        if detail.startswith('Unable to evaluate:'):
+            reason = detail.replace('Unable to evaluate:', '').strip()
+            finding_text = f"The check could not be evaluated because {reason}."
+            why_text = "This check could not be evaluated due to missing or invalid data."
+        elif check_type in {'outlier_iqr', 'outlier_zscore'}:
+            match = re.search(
+                r'Value\s+(?P<value>-?\d+(\.\d+)?)\s+is\s+'
+                r'(?P<position>below lower bound|above upper bound)\s+'
+                r'(?P<bound>-?\d+(\.\d+)?)',
+                detail
+            )
+            if match:
+                value = self._format_number(match.group('value'))
+                bound = self._format_number(match.group('bound'))
+                position = match.group('position')
+                if 'below' in position:
+                    finding_text = (
+                        f"The calculated value is {value}, which is lower than the expected lower bound of {bound}."
+                    )
+                else:
+                    finding_text = (
+                        f"The calculated value is {value}, which is higher than the expected upper bound of {bound}."
+                    )
+            else:
+                finding_text = "This value appears statistically unusual compared with similar municipalities."
+            why_text = (
+                "This value is significantly higher/lower than most similar municipalities and appears "
+                "statistically unusual."
+            )
+        elif detail.startswith('Missing/zero:'):
+            missing_cols = detail.replace('Missing/zero:', '').strip()
+            cols = [c.strip() for c in missing_cols.split(',') if c.strip()]
+            labels = [self._get_field_label(col) for col in cols]
+            finding_text = (
+                "The following required fields are missing or zero: "
+                f"{', '.join(labels) if labels else missing_cols}."
+            )
+            why_text = "One or more required fields were missing or zero for this check."
+        elif detail.startswith('Cross-table mismatch:'):
+            match = re.search(
+                r"primary column '(.+?)'\s*=\s*(?P<primary>-?\d+(\.\d+)?),\s*"
+                r"reference column '(.+?)'\s*=\s*(?P<reference>-?\d+(\.\d+)?)",
+                detail
+            )
+            if match:
+                primary_value = self._format_number(match.group('primary'))
+                reference_value = self._format_number(match.group('reference'))
+                finding_text = (
+                    f"The primary field value is {primary_value}, while the reference field value is "
+                    f"{reference_value}, and they do not match."
+                )
+            else:
+                finding_text = "The primary field value does not match the reference field value."
+            why_text = "Values from related tables should be consistent with each other."
+        elif detail.startswith('Consistency:'):
+            comp = detail.replace('Consistency:', '').strip()
+            match = re.search(
+                r'(?P<value>-?\d+(\.\d+)?)\s*(?P<op>!=|==|>=|<=|>|<)\s*(?P<other>-?\d+(\.\d+)?)',
+                comp
+            )
+            if match:
+                value = self._format_number(match.group('value'))
+                other = self._format_number(match.group('other'))
+                operator_phrase = self._format_operator_phrase(match.group('op'))
+                finding_text = (
+                    f"The value is {value}, which does not meet the expected condition of being {operator_phrase} "
+                    f"{other}."
+                )
+            else:
+                finding_text = "The values did not meet the expected consistency condition."
+            why_text = "Values that should be consistent were found to differ."
+        else:
+            range_match = re.search(
+                r'(?P<value>-?\d+(\.\d+)?)\s+not in range\s+\[(?P<lower>-?\d+(\.\d+)?),\s*'
+                r'(?P<upper>-?\d+(\.\d+)?)\]',
+                detail
+            )
+            comp_match = re.search(
+                r'(?P<value>-?\d+(\.\d+)?)\s+not\s+(?P<op>!=|==|>=|<=|>|<)\s+'
+                r'(?P<threshold>-?\d+(\.\d+)?)',
+                detail
+            )
+            if range_match:
+                value = self._format_number(range_match.group('value'))
+                lower = self._format_number(range_match.group('lower'))
+                upper = self._format_number(range_match.group('upper'))
+                finding_text = (
+                    f"The calculated value is {value}, which is outside the expected range of {lower} to {upper}."
+                )
+            elif comp_match:
+                value = self._format_number(comp_match.group('value'))
+                threshold = self._format_number(comp_match.group('threshold'))
+                operator_phrase = self._format_operator_phrase(comp_match.group('op'))
+                finding_text = (
+                    f"The value is {value}, which does not meet the expected condition of being {operator_phrase} "
+                    f"{threshold}."
+                )
+            elif detail:
+                finding_text = detail
+            finding_text = f"{finding_text} This suggests the input values for this check may need review."
+
+        primary_field = self._format_field_list(finding.get('column_1'))
+        reference_field = self._format_field_list(finding.get('column_2'))
+        section = self._format_section_list(finding.get('column_1'))
+
+        fields_lines = []
+        if primary_field:
+            fields_lines.append(f"Primary Field: {primary_field}")
+        if reference_field:
+            fields_lines.append(f"Reference Field: {reference_field}")
         if section:
-            parts.append(f"Section: {section}")
-        return " | ".join(parts)
+            fields_lines.append(f"Section: {section}")
 
-    def _build_user_friendly_observation(self, finding):
-        col1 = self._format_column_reference(finding.get('column_1'))
-        col2 = self._format_column_reference(finding.get('column_2'))
-        refs = []
-        if col1:
-            refs.append(f"Primary field: {col1}")
-        if col2:
-            refs.append(f"Reference field: {col2}")
-
-        detail = str(finding.get('detail', ''))
-        if detail.startswith('Cross-table:'):
-            detail = detail.replace('Cross-table:', 'Cross-table comparison failed:', 1)
-        elif detail.startswith('Unable to evaluate:'):
-            detail = detail.replace('Unable to evaluate:', 'Could not evaluate this check:', 1)
-
-        if refs:
-            detail = f"{detail}<br/><b>Fields:</b><br/>" + "<br/>".join(refs)
-        return detail
+        return {
+            'check_label': check_label,
+            'finding_text': finding_text,
+            'why_text': why_text,
+            'fields_lines': fields_lines,
+        }
         
     def generate_ulb_report(self, mp_id, ulb_info, findings):
         """Generate individual ULB audit report PDF"""
@@ -199,7 +359,14 @@ class ReportGenerator:
                 table_data = [['#', 'Rule', 'Severity', 'Observation']]
                 
                 for idx, f in enumerate(part_findings, 1):
-                    obs_text = f"{f['description']}<br/><b>Finding:</b> {self._build_user_friendly_observation(f)}"
+                    components = self._build_finding_components(f)
+                    fields_block = "<br/>".join(components['fields_lines']) if components['fields_lines'] else "N/A"
+                    obs_text = (
+                        f"<b>Check:</b> {components['check_label']}<br/>"
+                        f"<b>Finding:</b><br/>{components['finding_text']}<br/>"
+                        f"<b>Why this was flagged:</b><br/>{components['why_text']}<br/>"
+                        f"<b>Fields Involved:</b><br/>{fields_block}"
+                    )
                     table_data.append([
                         str(idx),
                         f['rule_id'],
@@ -246,6 +413,121 @@ class ReportGenerator:
         
         doc.build(story)
         self.logger.info(f"[OK] Generated report: {filename}")
+        return filepath
+
+    def generate_ulb_excel_report(self, mp_id, ulb_info, findings):
+        """Generate individual ULB audit report Excel with remark entry."""
+        filename = f"Audit_Report_{ulb_info['municipality_name'].replace(' ', '_')}_ID{mp_id}.xlsx"
+        filepath = self.output_folder / filename
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Audit Findings"
+
+        title_font = Font(size=14, bold=True, color="1F4788")
+        heading_font = Font(size=11, bold=True, color="2E5C8A")
+        header_font = Font(size=10, bold=True, color="FFFFFF")
+        header_fill = PatternFill("solid", fgColor="366092")
+        wrap_alignment = Alignment(wrap_text=True, vertical="top")
+        center_alignment = Alignment(horizontal="center", vertical="center")
+        thin_border = Border(
+            left=Side(style="thin", color="999999"),
+            right=Side(style="thin", color="999999"),
+            top=Side(style="thin", color="999999"),
+            bottom=Side(style="thin", color="999999"),
+        )
+
+        ws.merge_cells("A1:J1")
+        ws["A1"] = "TAMIL NADU STATE FINANCE COMMISSION - ULB Questionnaire Audit Report"
+        ws["A1"].font = title_font
+        ws["A1"].alignment = center_alignment
+
+        ws["A3"] = "Municipality"
+        ws["B3"] = ulb_info["municipality_name"]
+        ws["A4"] = "District"
+        ws["B4"] = ulb_info["district_name"]
+        ws["A5"] = "ULB ID"
+        ws["B5"] = str(mp_id)
+        ws["A6"] = "Report Date"
+        ws["B6"] = datetime.now().strftime("%d-%b-%Y")
+
+        for row in range(3, 7):
+            ws[f"A{row}"].font = heading_font
+
+        start_row = 8
+        headers = [
+            "#",
+            "Rule",
+            "Severity",
+            "Check",
+            "Finding",
+            "Why this was flagged",
+            "Primary Field",
+            "Reference Field",
+            "Section",
+            "Remarks",
+        ]
+        ws.append([""] * len(headers))
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=start_row, column=col, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = center_alignment
+            cell.border = thin_border
+
+        row_cursor = start_row + 1
+        if findings:
+            for idx, f in enumerate(findings, 1):
+                components = self._build_finding_components(f)
+                fields_lines = components['fields_lines']
+                primary_field = next((line.replace("Primary Field: ", "") for line in fields_lines if line.startswith("Primary Field: ")), "")
+                reference_field = next((line.replace("Reference Field: ", "") for line in fields_lines if line.startswith("Reference Field: ")), "")
+                section = next((line.replace("Section: ", "") for line in fields_lines if line.startswith("Section: ")), "")
+
+                row_values = [
+                    idx,
+                    f.get("rule_id", ""),
+                    f.get("severity", ""),
+                    components["check_label"],
+                    components["finding_text"],
+                    components["why_text"],
+                    primary_field,
+                    reference_field,
+                    section,
+                    "",
+                ]
+                for col, value in enumerate(row_values, 1):
+                    cell = ws.cell(row=row_cursor, column=col, value=value)
+                    cell.alignment = wrap_alignment if col >= 4 else center_alignment
+                    cell.border = thin_border
+                row_cursor += 1
+        else:
+            ws.merge_cells(start_row=row_cursor, start_column=1, end_row=row_cursor, end_column=10)
+            cell = ws.cell(row=row_cursor, column=1, value="No audit observations found. All validations passed successfully.")
+            cell.alignment = wrap_alignment
+            row_cursor += 1
+
+        column_widths = [5, 10, 10, 28, 45, 40, 30, 30, 30, 25]
+        for idx, width in enumerate(column_widths, 1):
+            ws.column_dimensions[get_column_letter(idx)].width = width
+
+        ws.freeze_panes = "A9"
+        ws.page_setup.orientation = "landscape"
+        ws.page_setup.fitToWidth = 1
+        ws.page_setup.fitToHeight = 0
+        ws.print_area = f"A1:J{row_cursor - 1}"
+
+        ws.protection.sheet = True
+        ws.protection.enable()
+        for row in ws.iter_rows(min_row=start_row + 1, max_row=row_cursor - 1, min_col=1, max_col=10):
+            for cell in row:
+                cell.protection = cell.protection.copy(locked=True)
+        for row in ws.iter_rows(min_row=start_row + 1, max_row=row_cursor - 1, min_col=10, max_col=10):
+            for cell in row:
+                cell.protection = cell.protection.copy(locked=False)
+
+        wb.save(filepath)
+        self.logger.info(f"[OK] Generated Excel report: {filename}")
         return filepath
     
     def generate_master_dashboard(self, all_findings, data_loader):

@@ -141,17 +141,21 @@ def main():
         report_generator = ReportGenerator(reports_dir)
         
         ulb_reports_generated = 0
+        ulb_excels_generated = 0
         for ulb in data_loader.ulb_list:
             mp_id = ulb['mp_id']
             ulb_findings = [f for f in all_findings if f['mp_id'] == mp_id]
             
             try:
                 report_generator.generate_ulb_report(mp_id, ulb, ulb_findings)
+                report_generator.generate_ulb_excel_report(mp_id, ulb, ulb_findings)
                 ulb_reports_generated += 1
+                ulb_excels_generated += 1
             except Exception as e:
                 logger.error(f"Failed to generate report for {ulb['municipality_name']}: {str(e)}")
         
         logger.info(f"[OK] Generated {ulb_reports_generated} ULB reports")
+        logger.info(f"[OK] Generated {ulb_excels_generated} ULB Excel reports")
         
         # ====================================================================
         # STEP 5: Generate Master Dashboard
@@ -178,6 +182,7 @@ def main():
         logger.info(f"  • ULBs Processed: {len(data_loader.ulb_list)}")
         logger.info(f"  • Total Findings: {len(all_findings)}")
         logger.info(f"  • Individual Reports: {ulb_reports_generated}")
+        logger.info(f"  • Individual Excel Reports: {ulb_excels_generated}")
         logger.info(f"  • Master Dashboard: 1")
         logger.info(f"  • Detailed Report: 1")
         logger.info("\n[OK] Audit execution successful!")

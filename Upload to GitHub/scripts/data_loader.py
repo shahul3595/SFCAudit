@@ -80,6 +80,8 @@ class DataLoader:
             if filepath.exists():
                 try:
                     df = pd.read_csv(filepath, encoding='utf-8-sig')  # Handle BOM
+                    if table_name == 'p7_assets':
+                        df = self._normalize_commission_year(df)
                     self.data[table_name] = df
                     self.logger.info(f"  [OK] Loaded {table_name}: {len(df)} rows, {len(df.columns)} columns")
                     loaded = True
@@ -95,6 +97,8 @@ class DataLoader:
                     if alt_filepath.exists():
                         try:
                             df = pd.read_csv(alt_filepath, encoding='utf-8-sig')
+                            if table_name == 'p7_assets':
+                                df = self._normalize_commission_year(df)
                             self.data[table_name] = df
                             self.logger.info(f"  [OK] Loaded {table_name} (from {alt_filename}): {len(df)} rows, {len(df.columns)} columns")
                             loaded = True
@@ -117,6 +121,18 @@ class DataLoader:
             self.logger.error("✗ Part 1 data not found - cannot extract ULB list")
         
         return self.data
+
+    def _normalize_commission_year(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Normalize commission year values for Part 7 assets."""
+        if 'p7_comm_year' not in df.columns:
+            return df
+
+        year_series = df['p7_comm_year'].astype(str).str.strip()
+        year_series = year_series.replace(r'(?i)^before\s*1990$', '1989', regex=True)
+        year_series = year_series.replace(r'(?i)^before1990$', '1989', regex=True)
+        year_series = year_series.replace('', pd.NA)
+        df['p7_comm_year'] = pd.to_numeric(year_series, errors='coerce')
+        return df
     
     def get_ulb_data(self, mp_id, table_name):
         """Get data for specific ULB and table"""
