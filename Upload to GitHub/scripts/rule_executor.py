@@ -731,7 +731,17 @@ class RuleExecutor:
         if pd.notna(calc_type) and str(calc_type).lower().strip() != 'none':
             value, error_msg = self.calc_engine.calculate(calc_type, rule, ulb_data)
             value_source = f"{calc_type} calculation"
+            if error_msg and self._is_multi_part_rule(rule):
+                retry_value, retry_error = self._calculate_with_reference_data(mp_id, rule, ulb_data)
+                if retry_error is None:
+                    value, error_msg = retry_value, None
+                    value_source = f"{calc_type} calculation (multi-part)"
+                else:
+                    error_msg = retry_error
             if error_msg:
+                if "denominator cannot be zero" in error_msg.lower() or "base value cannot be zero" in error_msg.lower():
+                    # Not applicable case (e.g., denominator population/staff is zero)
+                    return None
                 if "non-numeric" in error_msg.lower() or "text/categorical" in error_msg.lower():
                     error_key = f"{rule['checkpoint_id']}:non_numeric"
                     self._log_unique_error(error_key, f"Rule {rule['checkpoint_id']} skipped (non-numeric data in {rule['column_1']})")
@@ -750,11 +760,65 @@ class RuleExecutor:
         threshold_spec = rule.get('threshold')
         if pd.isna(threshold_spec):
             return None
+
+        value = self._normalize_year_value(rule, value)
         
         passed, detail = self.threshold_checker.check_threshold(value, threshold_spec, rule)
         if not passed:
-            return self._create_finding(mp_id, rule, f"{value_source}: {detail}")
+            return self._create_finding(mp_id, rule, f"{value_source}: {detail}", value)
         return None
+
+    def _normalize_year_value(self, rule: pd.Series, value: Optional[float]) -> Optional[float]:
+        """Normalize Excel serial dates into year when rule is year-like."""
+        if value is None:
+            return None
+
+        col1 = str(rule.get('column_1', '')).lower()
+        desc = str(rule.get('description', '')).lower()
+        if ('year' in col1 or 'year' in desc) and 30000 <= value <= 60000:
+            excel_epoch = pd.Timestamp('1899-12-30')
+            return float((excel_epoch + pd.to_timedelta(value, unit='D')).year)
+        return value
+
+    def _is_multi_part_rule(self, rule: pd.Series) -> bool:
+        return str(rule.get('multi_part', '')).strip().lower() == 'yes'
+
+    def _calculate_with_reference_data(self, mp_id: str, rule: pd.Series, ulb_data: pd.DataFrame) -> tuple[Optional[float], Optional[str]]:
+        """Retry calculations for multi-part rules using reference_table data."""
+        ref_table = rule.get('reference_table')
+        if pd.isna(ref_table):
+            return None, "Reference table is missing"
+
+        if str(ref_table).startswith('mp_'):
+            parts = str(ref_table).split('_')
+            if len(parts) > 2:
+                ref_table = '_'.join(parts[2:])
+
+        ref_data = self.data_loader.get_ulb_data(mp_id, ref_table)
+        if ref_data is None or ref_data.empty:
+            return None, "Reference table data not found"
+
+        calc_type = str(rule.get('calculation_type', '')).strip().lower()
+        val1, err1 = self.calc_engine._get_column_value(rule['column_1'], ulb_data)
+        if err1:
+            return None, f"Numerator: {err1}"
+
+        val2, err2 = self.calc_engine._get_column_value(rule['column_2'], ref_data)
+        if err2:
+            return None, f"Denominator: {err2}"
+
+        if calc_type == 'ratio':
+            if val2 == 0:
+                return None, "Denominator cannot be zero"
+            return val1 / val2, None
+        if calc_type in ['percentage', 'percentage_of']:
+            if val2 == 0:
+                return None, "Base value cannot be zero"
+            return (val1 / val2) * 100, None
+        if calc_type == 'difference':
+            return val1 - val2, None
+
+        return None, f"Unsupported multi-part calculation type: {calc_type}"
     
     def _check_consistency_rule(self, mp_id: str, rule: pd.Series, ulb_data: pd.DataFrame) -> Optional[Dict[str, Any]]:
         val1, err1 = self.calc_engine._get_column_value(rule['column_1'], ulb_data)
@@ -863,12 +927,16 @@ class RuleExecutor:
                 detail = f"{val1:.2f} not < {val2:.2f}"
             
             if failed:
-                return self._create_finding(mp_id, rule, f"Cross-table: {detail}")
+                detail_text = (
+                    f"Cross-table mismatch: primary column '{rule['column_1']}' = {val1:.2f}, "
+                    f"reference column '{rule['column_2']}' = {val2:.2f}"
+                )
+                return self._create_finding(mp_id, rule, detail_text)
         except Exception as e:
             return self._create_error_finding(mp_id, rule, f"Cross-table error: {str(e)}")
         return None
     
-    def _create_finding(self, mp_id: str, rule: pd.Series, detail: str) -> Dict[str, Any]:
+    def _create_finding(self, mp_id: str, rule: pd.Series, detail: str, value: Optional[float] = None) -> Dict[str, Any]:
         ulb_info = self.data_loader.get_ulb_info(mp_id)
         severity = str(rule['severity']).capitalize() if pd.notna(rule.get('severity')) else 'Medium'
         
@@ -881,7 +949,13 @@ class RuleExecutor:
             'severity': severity,
             'check_type': rule['validation_type'],
             'description': rule['description'],
-            'detail': detail
+            'detail': detail,
+            'column_1': rule.get('column_1'),
+            'column_2': rule.get('column_2'),
+            'primary_table': rule.get('primary_table'),
+            'reference_table': rule.get('reference_table'),
+            'operator': rule.get('operator'),
+            'threshold': rule.get('threshold')
         }
     
     def _create_error_finding(self, mp_id: str, rule: pd.Series, error_msg: str) -> Dict[str, Any]:
@@ -895,5 +969,11 @@ class RuleExecutor:
             'severity': 'Medium',
             'check_type': rule['validation_type'],
             'description': rule['description'],
-            'detail': f"Unable to evaluate: {error_msg}"
+            'detail': f"Unable to evaluate: {error_msg}",
+            'column_1': rule.get('column_1'),
+            'column_2': rule.get('column_2'),
+            'primary_table': rule.get('primary_table'),
+            'reference_table': rule.get('reference_table'),
+            'operator': rule.get('operator'),
+            'threshold': rule.get('threshold')
         }
