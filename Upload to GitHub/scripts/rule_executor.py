@@ -821,17 +821,41 @@ class RuleExecutor:
         return None, f"Unsupported multi-part calculation type: {calc_type}"
     
     def _check_consistency_rule(self, mp_id: str, rule: pd.Series, ulb_data: pd.DataFrame) -> Optional[Dict[str, Any]]:
-        val1, err1 = self.calc_engine._get_column_value(rule['column_1'], ulb_data)
-        if err1:
-            if "non-numeric" in err1.lower():
-                return None
-            return self._create_error_finding(mp_id, rule, f"Column 1: {err1}")
-        
-        val2, err2 = self.calc_engine._get_column_value(rule['column_2'], ulb_data)
-        if err2:
-            if "non-numeric" in err2.lower():
-                return None
-            return self._create_error_finding(mp_id, rule, f"Column 2: {err2}")
+        calc_type = str(rule.get('calculation_type', '')).strip().lower()
+
+        if calc_type == 'difference' and pd.notna(rule.get('column_3')):
+            expected_val, err1 = self.calc_engine._get_column_value(rule['column_1'], ulb_data)
+            if err1:
+                if "non-numeric" in err1.lower():
+                    return None
+                return self._create_error_finding(mp_id, rule, f"Column 1: {err1}")
+
+            minuend, err2 = self.calc_engine._get_column_value(rule['column_2'], ulb_data)
+            if err2:
+                if "non-numeric" in err2.lower():
+                    return None
+                return self._create_error_finding(mp_id, rule, f"Column 2: {err2}")
+
+            subtrahend, err3 = self.calc_engine._get_column_value(rule['column_3'], ulb_data)
+            if err3:
+                if "non-numeric" in err3.lower():
+                    return None
+                return self._create_error_finding(mp_id, rule, f"Column 3: {err3}")
+
+            val1 = expected_val
+            val2 = minuend - subtrahend
+        else:
+            val1, err1 = self.calc_engine._get_column_value(rule['column_1'], ulb_data)
+            if err1:
+                if "non-numeric" in err1.lower():
+                    return None
+                return self._create_error_finding(mp_id, rule, f"Column 1: {err1}")
+
+            val2, err2 = self.calc_engine._get_column_value(rule['column_2'], ulb_data)
+            if err2:
+                if "non-numeric" in err2.lower():
+                    return None
+                return self._create_error_finding(mp_id, rule, f"Column 2: {err2}")
         
         operator = str(rule.get('operator', '=')).strip()
         try:
